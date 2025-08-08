@@ -1,6 +1,6 @@
 import telebot
-import openai
 import os
+from openai import OpenAI
 
 # === Pegando tokens das variáveis de ambiente ===
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -10,16 +10,16 @@ if not TELEGRAM_TOKEN or not OPENAI_API_KEY:
     raise ValueError("Faltam as variáveis TELEGRAM_TOKEN ou OPENAI_API_KEY.")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Função para gerar resposta da IA
 def gerar_resposta(pergunta):
     try:
-        resposta = openai.ChatCompletion.create(
+        resposta = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": pergunta}]
         )
-        return resposta.choices[0].message["content"].strip()
+        return resposta.choices[0].message.content.strip()
     except Exception as e:
         return f"Erro ao gerar resposta: {e}"
 
