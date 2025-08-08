@@ -2,23 +2,33 @@ import telebot
 import openai
 import os
 
+# === Pegando tokens das variáveis de ambiente ===
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_KEY = os.getenv("OPENAI_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if not TELEGRAM_TOKEN or not OPENAI_API_KEY:
+    raise ValueError("Faltam as variáveis TELEGRAM_TOKEN ou OPENAI_API_KEY.")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-openai.api_key = OPENAI_KEY
+openai.api_key = OPENAI_API_KEY
 
-@bot.message_handler(func=lambda message: True)
-def responder(message):
+# Função para gerar resposta da IA
+def gerar_resposta(pergunta):
     try:
         resposta = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message.text}]
+            messages=[{"role": "user", "content": pergunta}]
         )
-        texto = resposta.choices[0].message["content"]
-        bot.reply_to(message, texto)
+        return resposta.choices[0].message["content"].strip()
     except Exception as e:
-        bot.reply_to(message, f"Erro: {str(e)}")
+        return f"Erro ao gerar resposta: {e}"
 
-print("🤖 Bot rodando no Railway...")
+# Quando receber mensagem no Telegram
+@bot.message_handler(func=lambda message: True)
+def responder(message):
+    pergunta = message.text
+    resposta = gerar_resposta(pergunta)
+    bot.reply_to(message, resposta)
+
+print("🤖 Bot IA rodando...")
 bot.polling()
